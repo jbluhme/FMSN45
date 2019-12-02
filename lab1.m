@@ -65,7 +65,7 @@ A = [1 -1.35 0.43];
 sigma2 = 4;
 noise = sqrt(sigma2)*randn(n+100,1);
 y = filter(1, A, noise);
-y = y(101:end); % Why do we do this 
+y = y(101:end);
 subplot(211)
 plot(y)
 title('AR(2) process')
@@ -197,7 +197,7 @@ am22_model = armax(data, [2 2]);
 
 A =[1 1.5 0.7];
 C = [1 zeros(1,11) -0.5];
-A12 = [1 zeros(1,11) -1]; %Why -1? 
+A12 = [1 zeros(1,11) -1]; 
 A_star = conv(A, A12);
 e = randn(600,1);
 y = filter(C, A_star, e);
@@ -339,7 +339,7 @@ armax_c = model_armax.c;
 
 
 
-% y_res = filter(armax_a,armax_c,y_s); Fråga om denna
+% y_res = filter(armax_a,armax_c,y_s); 
 rar = resid(model_armax, data);
 
 figure5 = figure('Name','3.5 Residual Analysis','NumberTitle','on');
