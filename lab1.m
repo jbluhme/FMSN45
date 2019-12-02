@@ -286,7 +286,7 @@ normplot(rar.OutputData);
 title('normplot')
 
 
-close all;
+
 %% Estimation on real data
 load('/Users/joelbluhme/Dokument/hd_SKOLA/MATLAB/Tidsserier FMSN45/Course files/data/svedala.mat')
 y = svedala;
@@ -310,9 +310,9 @@ subplot(313)
 normplot(y);
 title('Normplot of output')
 
-A24 = [1 zeros(1,23) -1]; %Why -1 
+A24 = [1 zeros(1,23) -1]; %Season removed
 y_s=filter(A24,1,y);
-y_s=y_s(25:end); %Fråga Carl vrf. fel?
+y_s=y_s(60:end); 
 data=iddata(y_s);
 
 
@@ -331,13 +331,15 @@ title('Normplot of output')
 
 
 model_init = idpoly([1 zeros(1,24)],[],[1 zeros(1,24)]);
-model_init.Structure.a.Free = [0 1 1 zeros(1,21) 1];
+model_init.Structure.a.Free = [0 1 1 zeros(1,21) 0];
 model_init.Structure.c.Free = [0 0 0 zeros(1,21) 1];
 model_armax = pem(data, model_init)
 armax_a = model_armax.a;
 armax_c = model_armax.c;
 
-% y_res = filter(armax_a,armax_c,y_s); Fråga om denna
+
+
+% y_res = filter(armax_a,armax_c,y_s); FrÃ¥ga om denna
 rar = resid(model_armax, data);
 
 figure5 = figure('Name','3.5 Residual Analysis','NumberTitle','on');
@@ -355,7 +357,7 @@ normplot(rar.OutputData);
 title('normplot')
 
 
-%% Förberedelse
+%% FÃ¶rberedelse
 
 y = input_data;
 A5 = [1 zeros(1,4) -1]; % Setting season
