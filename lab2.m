@@ -377,64 +377,144 @@ set(gcf, 'Position',  [50, 150, 1200, 700]);
 basicanalysis(ehat_26,40)
 title('26-step prediction')
 
-figure;
-plot(yhat_k3, 'r-')
-hold on
-plot(y3, 'b-')
-hold off
-legend('3-step prediction','Process')
-title('3-step prediction')
-
-
 %% 3.4 Prediction of ARMAX-processes
 
 load sturup;
 u = sturup;
+y = svedala;
 
 A_u = [1 -1.49 0.57];
-B_u = [0 0 0 0.28 -0.26]
+B_u = [0 0 0 0.28 -0.26];
 C_u = [1];
 
 %% 3.4 Svedala initialization
 
+k3 = 3;
+k26 = 26;
 
-% k3 = 3;
-% k26 = 26;
-% [F_u3,G_u3] = diophantine(C_u,A_u,k3);
-% [F_u26,G_u26] = diophantine(C_u,A_u,k26);
-
+[Fk3, Gk3] = diophantine(C_u, A_u, k3);
+[Fk26, Gk26] = diophantine(C_u, A_u, k26);
 
 BF3 = conv(B_u,Fk3);
 BF26 = conv(B_u,Fk26);
-[Fhat3,Ghat3] = diophantine(BF3,C_u,k3);
-[Fhat26,Ghat26] = diophantine(BF26,C_u,k26);
 
-uhat_k3 = filter(Ghat3,C_u,u); 
-uhat_k3 = uhat_k3(max(length(Ghat3),length(C_u)):end);
-y1hat_k3 = filter(Gk3,C_u,y); 
-y1hat_k3 = y1hat_k3(max(length(Ghat3),length(C_u)):end); %remove samples
-yhat_k3 = y1hat_k3+uhat_k3;
+[Fu3_hat, Gu3_hat] = diophantine(BF3,C_u,k3);
+[Fu26_hat, Gu26_hat] = diophantine(BF26,C_u,k26);
 
+u3_hat = filter(Gu3_hat, C_u, u);
+u3_hat = u3_hat(max([length(Gu3_hat), length(C_u), length(Gk3)]):end);
+u26_hat = filter(Gu26_hat, C_u,u);
+u26_hat = u26_hat(max([length(Gu26_hat), length(C_u), length(Gk26)]):end);
 
-uhat_k26 = filter(Ghat26,C_u,u); 
-uhat_k26 = uhat_k26(max(length(Ghat26),length(C_u)):end); %remove samples
-u_k26 = u(max(length(Ghat26),length(C_u)):end);
-y1hat_k26 = filter(Gk26,C_u,y); 
-y1hat_k26 = y1hat_k26(max(length(Ghat26),length(C_u)):end); %remove samples
-yhat_k26 = y1hat_k26+uhat_k26;
+y1_3_hat = filter(Gk3,C_u, y);
+y1_3_hat = y1_3_hat(max([length(Gu3_hat), length(C_u), length(Gk3)]):end);
+y1_26_hat = filter(Gk26,C_u, y);
+y1_26_hat = y1_26_hat(max([length(Gu26_hat), length(C_u), length(Gk26)]):end);
+
+y_3_hat = u3_hat + y1_3_hat;
+y_26_hat = u26_hat + y1_26_hat;
+
 
 figure9 = figure('Name','3 step predictions','NumberTitle','on');
 set(gcf, 'Position',  [50, 150, 1200, 700]);
 
+y3 = y(length(y)-length(yhat_k3):length(y));
 plot(yhat_k3, 'r-')
 hold on
-plot(y(length(y)-length(yhat_k3):length(y)),'b-')
+plot(y3,'b-')
 hold off
 legend('3-step prediction','Process')
 title('3-step prediction')
 
+e_3_hat = y(max([length(Gu3_hat), length(C_u), length(Gk3)]):end) - y_3_hat;
+var_3_hat_emp = var(e_3_hat);
+
+%% 3.5 Prediction of SARIMA-process
+
+close all;
+clear;
+load svedala
+
+figure11 = figure('Name','First analysis Svedala data','NumberTitle','on');
+set(gcf, 'Position',  [50, 150, 1200, 700]);
+subplot(121)
+plot(svedala)
+title('Raw data')
+S = 24;
+AS = [1 zeros(1,S-1) -1];
+ys = filter(AS,1,svedala);
+ys = ys(length(AS):end); % remove samples
+subplot(122)
+plot(ys);
+title('Season of 24 removed')
+
+figure12 = figure('Name','Data analysis Svedala season model','NumberTitle','on');
+set(gcf, 'Position',  [50, 150, 1200, 700]);
+basicanalysis(ys,40)
 
 
+ys_poly = idpoly([1 0 0], [], [1 zeros(1,23) 1],[],[]); %% ARMA with a1 a2 and c24
+ys_poly.Structure.c.Free = [0 zeros(1,23) 1];
+
+ysdata = iddata(ys);
+model_init = pem(ysdata,ys_poly);
+ys_res = resid(model_init,ysdata);
+figure13 = figure('Name','Residual analysis initial model','NumberTitle','on'); %Looks white!
+set(gcf, 'Position',  [50, 150, 1200, 700]);
+residualanalysis(model_init, ys, 40)
+
+AxAS = conv(model_init.A, AS);
+C = model_init.C;
+
+nonStableARMA = model_init; %Copy of original model
+nonStableARMA.a = AxAS; %Replacing A with SAR
+
+svedala_data = iddata(svedala);
+svedala_res = resid(nonStableARMA,svedala_data);
+
+
+A = nonStableARMA.a;
+C = nonStableARMA.c;
+
+k3 = 3; 
+k26 = 26;
+
+y = svedala;
+
+[Fk3s,Gk3s] = diophantine(C,A,k3);
+yhat_sk3 = filter(Gk3s,C,svedala);
+yhat_sk3 = yhat_sk3(max(length(Gk3s),length(C)):end);
+y_sk3 = y(max(length(Gk3s),length(C)):end);
+
+[Fk26s,Gk26s] = diophantine(C,A,k26);
+yhat_sk26 = filter(Gk26s,C,svedala);
+yhat_sk26 = yhat_sk26(max(length(Gk26s),length(C)):end);
+y_sk26 = y(max(length(Gk26s),length(C)):end);
+
+figure12 = figure('Name','Data analysis Svedala season model','NumberTitle','on');
+set(gcf, 'Position',  [50, 150, 1200, 700]);
+
+subplot(121)
+plot(yhat_sk3, 'r-')
+hold on
+plot(y_sk3,'b-')
+hold off
+legend('3-step prediction','Process')
+title('3-step prediction')
+
+subplot(122)
+plot(yhat_sk26, 'r-')
+hold on
+plot(y_sk26,'b-')
+hold off
+legend('3-step prediction','Process')
+title('3-step prediction')
+
+e_3_hat = y_sk3 - yhat_sk3;
+var_emp_e_3 = var(e_3_hat);
+
+e_26_hat = y_sk26 - yhat_sk26;
+var_emp_e_26 = var(e_26_hat);
 
 
 
