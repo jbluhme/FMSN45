@@ -6,24 +6,27 @@ load('climate66.dat')
 load('climate67.dat')
 load('climate68.dat')
 load('climate69.dat')
-plot(climate67(7000:7200,8))
+plot(climate67(1:8500,6))
  
 
 
 
 
 
-%% SUGGESTION:
+
 %% Following (appr 16 weeks) of temp. data from 1967 seems relatively stationary, we choose it to make up our 
 % modelling (11 weeks) and validation (3 weeks) and test data 1 and 2 (1 week each).
-figure(2)
-plot(climate67(3200:5800,8)) % Plots modelling, validation, and test 1 sets
 
-Mdldata=climate67(3200:5000,:); % Defines the data sets
-Valdata=climate68(3200:5000,:);
+plot(climate67(3600:5800,8)) % Plots modelling, validation, and test 1 sets
+
+Mdldata=climate67(3400:5000,:); % Defines the data sets
+
+Valdata=climate67(5001:5600,:);
+
+
 Test1data=climate67(5601:5800,:);
-Test2data=climate67(7000:7200,:);
 
+Test2data=climate67(8000-500:9200-500,:);
 
 %% ARMA modelling
 %% Step 1a Check whether transformation of data is reasonable
@@ -33,20 +36,6 @@ OptLambda=bcNormPlot(climate67(3200:5800,8)) % =0.95 so no transformation seems 
 %% Step 1b make the process y zero mean
 y=Mdldata(:,8);
 y=y-mean(y); 
-
-%% Step 2 Examine the pacf and acf of y
-Ad= [1 -1];
-y_d=filter(Ad,1,y);
-y_d=y_d(2:end); %%
-figure(1)
-phi = pacf( y_d, 100,0.05, 1, 1 );
-title("PACF for y");
-figure(2)
-rho = acf( y_d, 100,0.05, 1, 1 );
-title("ACF for y");
-figure(3)
-normplot(phi)
-title("Normplot of pacf"); % estimated pacf seems gaussian -> confidence intervals are reliable
 
 %% Step 2 Examine the pacf and acf of y
 figure(1)
@@ -72,6 +61,7 @@ A=conv([1 1 0],AS)
 C=[1 1 1];
 ar=idpoly(A,[],C); % Estimate model M1 and the resulting residual 
 ar.Structure.a.Free = [0 1 1 A(4:end-4) 1 1 1 0];
+ar.Structure.c.Free = C;
 M1 = pem(data,ar);
 r1=resid(M1,data);
 
@@ -90,7 +80,7 @@ present(M1)
 % The test statistics in he whiteness test are relatively good for being
 % real data and both acf, pacf and cumPer of residuals look good
 
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Step 4 Prediction on validation set
 
 
@@ -174,7 +164,7 @@ hold off
 figure(2)
 rho = acf( pe7, 100,0.05, 1, 1 );
 title("ACF for pe7");
-%%
+
 V_pe7=var(pe7) % =3.95
 TV_pe7=F'*F*V_pe1 % =5.17 ie higher than actual
 mean(pe7) % =0.78 thus we see that our model underestimate the temperature,
@@ -186,5 +176,54 @@ mean(pe7) % =0.78 thus we see that our model underestimate the temperature,
 
 % We could also try to make a slighlty smaller modelling set
 
+%% 26-step prediction
+k=26;
+[F,G]=Diophantine(M1.c,M1.a,k)
+
+SF=50; % Safety factor, begin predicting SF time units before val to handle the initial corruptness of the data
+
+y=Mdldata(:,8); % Our zero mean modelling data vector
+y=y-mean(y); 
+
+yval=Valdata(:,8); % Our zero mean adj. validation data vector
+yval=yval-mean(Mdldata(:,8)); 
+
+% Crucial that the predictions and true values are in line, it can be seen that:
+
+% yhat_k(1)= prediction of y(end-SF+k) = y(end-SF+(k-1)+1)=ynew(1+k) 
+% yhat_k(2)= prediction of y(end-SF+k+1) = ynew(2+k)
+% ...
+% yhat_k(2+SF-k)=prediction of ynew(2+SF)=yval(1) ie the first "wanted" prediction
+
+% yhat_k(end-k)=prediction of yval(end) ie the last "wanted" pred.
 
 
+ynew=[y(end-SF:end); yval]; % We concatenate the last SF+1 values of the modelling data vector and the validation vector
+yhat_26=filter(G,M1.c,ynew); % We filter this concatenated vector
+figure(1)
+plot(yhat_26(2+SF-k:end-k)+mean(Mdldata(:,8))) 
+hold on 
+plot(yval(1:end)+mean(Mdldata(:,8)))
+legend('26-step pred','True value')
+pe26=yval(1:end)-yhat_26(2+SF-k:end-k); % 26-step pred error 
+hold off
+
+% 26 step pred. follows the wiggling of the data amazingly well
+
+
+figure(2)
+rho = acf( pe26, 100,0.05, 1, 1 );
+title("ACF for pe26");
+
+V_pe26=var(pe26) % =8.43
+TV_pe26=F'*F*V_pe1 % =11.98 ie higher than actual
+mean(pe26) % =2,84 underestimates temperature
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Prediction on test sets
+
+% ...
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
