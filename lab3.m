@@ -90,7 +90,6 @@ end
 
 
 %% 3.2 Plotting true, RLS and Kalman 
-
 figure('Name','3.2 True parameters, RLS estimates, Kalman estimates','NumberTitle','on');
 subplot(311) 
 plot(thx)
@@ -105,7 +104,7 @@ plot(xsave')
 title('Kalman estimates')
 
 
-%% 3.3 Quality control of a process 
+%% 3.3 Quality control of a process - Init 
 clear;
 close all;
 
@@ -133,6 +132,61 @@ for i=1:length(y)
     y(i) = x(i) + b*u_t(i) + v_t(i);
 end
 
+%% 3.3 QUality control of a process - Kalman
 
+N = length(y); 
+
+% Define the state space equations
+A = [1 0; 0 1]; %Standard def.? 
+Re = [1 0; 0 0]; %Only x_t corrupted by process noise (B is not), scaling this?
+Rw = 1.25; 
+
+% Set initial values
+
+Rzz_1 = var(y(1:5))*eye(2); % Initial variance, why y? (8.107 initialization?)
+ztt_1 = [0 0]'; % Initial states 
+
+% Vector to store values in
+z=zeros(2,N);
+
+% Kalman filter. Start from k=3, since we need old values of y.
+for k=2:N
+  % C is a function of time.
+  C = [1 u_t(k)]; %?
+   
+  % Update
+  Ryy = C*Rzz_1*C' + Rw;
+  Kt = (Rzz_1*C')*(Ryy)^(-1);
+  ztt = ztt_1 + (Kt*(y(k) - C*ztt_1));
+  Rzz = (eye(2)-Kt*C)*Rzz_1;
+ 
+  % Save
+  z(:,k) = ztt;
+  
+  %1-step prediction
+  
+  ztt_1 = A*ztt;
+  Rzz_1 = A*Rzz*A' + Re;
+  
+  
+end
+
+%% 3.3 Plotting to compare
+b_s = zeros(1,500)
+for i=1:500
+b_s(i) = b;    
+end
+
+figure('Name','3.3 True parameters, Kalman estimates','NumberTitle','on');
+subplot(211) 
+plot(x)
+hold on
+plot(b_s')
+hold off
+title('True parameters')
+
+subplot(212) 
+plot(z')
+title('Kalman estimates')
 
 
