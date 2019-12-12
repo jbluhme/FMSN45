@@ -11,8 +11,7 @@
 % through kalman filter, future input assumed known 
 
 % Ie pred(i,1) is prediction of y(pred(i,2)) 
-% and pred(N-predlength,1) is prediction of y(end) .
-% The rest are pred. of values after y(end)
+
 
 %% Requires input:
 % y=output data vector [modelleing data...testdata]
@@ -29,6 +28,8 @@
 % where the first p diag elements corrsponds to the assumed variance of the
 % A parameters, the next q correpsonds to C parameters and final s+1 to B param variance. 
 % If you do not want a parameter to change, set it's diag element in Re to zero.
+% Set diag in V0 for that parameter to zero too then it will not change
+
 
 % Example: A=[1 a1 a2] B=[b0 b1] C=[1 c1] where you believe that a1 and b1 should be constant
 % then you set Re=zeros(5) and Re(2,2)=V[a2], Re[3,3]=V[b0] and Re[5,5]=V[c1]
