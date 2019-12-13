@@ -170,7 +170,7 @@ for k=1:predlength
     
     if k>Cord % Chat contains only future noise which are best predicted by zero
         
-        Chat(Aord+1:Aord+q)=zeros(1,Cord);
+        Chat(Aord+1:Aord+Cord)=zeros(1,Cord);
         
     else % Chat contains estimates (pred. errors) of previous noise
         
