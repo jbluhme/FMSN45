@@ -11,6 +11,7 @@
 % through kalman filter, future input assumed known 
 
 % Ie pred(i,1) is prediction of y(pred(i,2)) 
+ 
 
 
 %% Requires input:
@@ -54,12 +55,13 @@ function [param,pred]=kalman_armax(y,u,Aord,Bord,Cord,Re,Rw,V0,m0,predlength)
 % Data length
 N = length(y); 
 
-predictions=zeros(N-max([Bord Aord]),2); % Vector to save predictions in
+predictions=zeros(N-max([Bord Aord])-predlength+1,2); % Vector to save predictions in
 
 
 
 
-% State space equations w. states being ARMAX param: x(t)=[a1(t) ... ap(t) c1(t) ... cq(t) ]'
+
+% State space equations w. states being ARMAX param: x(t)=[a1(t) ... ap(t) c1(t) ... cq(t) b0(t) ... bs(t)]'
 
 % x(t) = A*x(t-1)+e = I*x(t-1)+e(t)
 % y(t) = C(t)*x(t) = [-y(t-1)...-y(t-p) ehat(t-1|t-2)...ehat(t-q|t-q-1) u(t)...u(t-s)]*x(t)+w(t)
@@ -78,7 +80,8 @@ end
     
 Totparam=Aord+Bord+Cord; 
 
-if u~=0 % If we have input then we allow the first coeff. b0 in B(z) to vary 
+input=u~=0;
+if sum(input) % If we have input then we allow the first coeff. b0 in B(z) to vary 
     Totparam=Totparam+1;
 end
  
@@ -86,7 +89,7 @@ end
 A =eye(Totparam); % Define system matrices
 C=zeros(1,Totparam); 
 
-ehat=zeros(Cord,1); % ehat=[pe(t|t-1) ... pe(t-q+1|t-q)]
+ehat=zeros(1,Cord); % ehat=[pe(t|t-1) ... pe(t-q+1|t-q)]
 % Vector to store 1-step pred errors (pe) in, since we do not have any
 % idea about their size in the beginning we assume that the pred errors for 
 % times max([s p])-q+1 ... max([s p]) are zero.
@@ -127,7 +130,7 @@ for i=1:Totparam % Update C(k)
         C(i)=ehat(i-Aord);
        
     else   % Update input part with prev. u 
-    C(i)= -u(t-(i-Aord+Cord-1));      
+    C(i)= u(t-(i-(Aord+Cord)-1));      
    
     end
      
@@ -146,13 +149,17 @@ end % C(k) is updated
 % ...
 
 
-
+if t<=N-predlength+1 % Our last prediction is made at time t=N-predlength and is for y(N)
 yhat=zeros(1,predlength);   
 Chat=C;
 
 for k=1:predlength
     
     yhat(k)=Chat*xtt; % yhat(k)=yhat(t-1+k|t+k-2)
+    
+    if k==predlength
+        break;
+    end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     if Aord>0 % If we have an AR part in model
     
@@ -180,9 +187,10 @@ for k=1:predlength
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    if Bord>=0 && u~=0 % If we have an input part with B(z) in model
+    input=u~=0;
+    if Bord>=0 && sum(input)  % If we have an input part with B(z) in model
         
-      Chat(Aord+Cord+1:Bord+1)=u(t+k:t+k-Bord); % Assume future input known 
+      Chat(Aord+Cord+1:Aord+Cord+Bord+1)=flip(u(t+k-Bord:t+k)'); % Assume future input known 
    
     end
     
@@ -190,7 +198,7 @@ end
   predictions(t-max([Bord Aord]),1)=yhat(end); % The desired prediction ( for t-1+predlength) is found at end of yhat
   predictions(t-max([Bord Aord]),2)=t-1+predlength; % Time that is predicted
 
-
+end
 
 
 
