@@ -161,9 +161,13 @@ for k=1:predlength
     if Aord>0 % If we have an AR part in model
     
        for j=1:min([k Aord]) % 
-      Chat(j)=yhat(k-j+1);  
-        end
+      Chat(j)=-yhat(k-j+1);
+       end
     
+      if Aord>k % Chat contains known y values
+      Chat(k+1:Aord)=-flip(y(t-(Aord-k):t-1));
+      end
+       
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     if Cord>0 % If we have an MA part in model
