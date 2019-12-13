@@ -148,19 +148,21 @@ end % C(k) is updated
 
 if t<=N-predlength+1 % Our last prediction is made at time t=N-predlength and is for y(N)
 yhat=zeros(1,predlength);   
-Chat=C;
+Chat=C; % =C(t|t-1) 
 
 for k=1:predlength
     
-    yhat(k)=Chat*xtt; % yhat(k)=yhat(t-1+k|t+k-2)
+    yhat(k)=Chat*xtt; % yhat(k)=yhat(t-1+k|t-1)
     
     if k==predlength
         break;
     end
+    
+    % Below we create C(t+k|t-1) ie the C to calculate yhat(t+k|t-1)
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     if Aord>0 % If we have an AR part in model
     
-       for j=1:min([k Aord]) % 
+       for j=1:min([k Aord]) % Fill in predictions of y
       Chat(j)=-yhat(k-j+1);
        end
     
@@ -172,16 +174,16 @@ for k=1:predlength
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     if Cord>0 % If we have an MA part in model
     
-    if k>Cord % Chat contains only future noise which are best predicted by zero
+    if k>=Cord % Chat contains only future noise which are best predicted by zero
         
         Chat(Aord+1:Aord+Cord)=zeros(1,Cord);
         
     else % Chat contains estimates (pred. errors) of previous noise
         
-        if k>1  
-        Chat(Aord+1:Aord+k-1)=zeros(1,k-1);
-        end
-        Chat(Aord+k:Aord+Cord)=ehat(1:Cord-k+1);
+          
+        Chat(Aord+1:Aord+k)=zeros(1,k);
+        
+        Chat(Aord+k+1:Aord+Cord)=ehat(1:Cord-k);
         
     end
     
