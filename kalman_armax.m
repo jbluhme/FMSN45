@@ -58,9 +58,6 @@ N = length(y);
 predictions=zeros(N-max([Bord Aord])-predlength+1,2); % Vector to save predictions in
 
 
-
-
-
 % State space equations w. states being ARMAX param: x(t)=[a1(t) ... ap(t) c1(t) ... cq(t) b0(t) ... bs(t)]'
 
 % x(t) = A*x(t-1)+e = I*x(t-1)+e(t)
@@ -80,8 +77,8 @@ end
     
 Totparam=Aord+Bord+Cord; 
 
-input=u~=0;
-if sum(input) % If we have input then we allow the first coeff. b0 in B(z) to vary 
+
+if sum(u)~=0 % If we have input then we allow the first coeff. b0 in B(z) to vary 
     Totparam=Totparam+1;
 end
  
@@ -187,8 +184,9 @@ for k=1:predlength
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    input=u~=0;
-    if Bord>=0 && sum(input)  % If we have an input part with B(z) in model
+    
+    
+    if Bord>=0 && sum(u)~=0  % If we have an input part with B(z) in model
         
       Chat(Aord+Cord+1:Aord+Cord+Bord+1)=flip(u(t+k-Bord:t+k)'); % Assume future input known 
    
