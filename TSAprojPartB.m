@@ -403,8 +403,8 @@ title("ACF for pe7"); % Should me MA(7-1) which seems reasonable
 
 
 
-V_pe7=var(pe7) % = 1,8770 lower than on validation data
-mean(pe7)  % 0.4650 Slight underestimation again
+V_pe7=var(pe7) % = 1,7438 lower than on validation data
+mean(pe7)  % 0.4265 Slight underestimation again
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% 7 step pred. test2 data
@@ -460,5 +460,5 @@ title("ACF for pe7"); % Should me MA(7-1) which seems reasonable
 
 
 
-V_pe7=var(pe7) % = 1,2443 lower than on test1, most likely due to lower temperatures and thus lower absolut variability
-mean(pe7)  % -1.2711 Slight overestimation again
+V_pe7=var(pe7) % = 1,3152 lower than on test1, most likely due to lower temperatures and thus lower absolut variability
+mean(pe7)  % -1.2544 Slight overestimation again

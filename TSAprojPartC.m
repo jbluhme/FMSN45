@@ -158,7 +158,7 @@ whitenessTest(pe,0.01)
 % Choose kalman param:
 m0=[A(2:end) C(2:end) B]'; % Our BJ non-recursive estimate as initial
 
-Re = 10^-6*eye(80); % Choose system error variability
+Re = 10^-3*eye(80); % Choose system error variability
 Rw=0.5;             % Choose measurement error variability which should be around MSE of model
 diagOfV0=zeros(1,length(m0)); 
 
@@ -169,7 +169,7 @@ else
    Re(i,i)=0; 
 end
 end
-V0=10^-5*diag(diagOfV0); % Initial variance of m0, should be pretty low
+V0=10^-3*diag(diagOfV0); % Initial variance of m0, should be pretty low
 
 
 k=7; % desired prediction step size
@@ -258,7 +258,7 @@ Test1data=climate67(5601:5768,:); % ie ytest1=totY(5601:5768)
 Test2data=climate67(7501:7668,:);
 
 % Define kalman param: 
-Re = 10^-5*eye(80); % Choose system error variability
+Re = 10^-4*eye(80); % Choose system error variability
 Rw=0.25;             % Choose measurement error variability which should be around MSE of model
 diagOfV0=zeros(1,length(m0)); 
 
@@ -269,7 +269,7 @@ else
    Re(i,i)=0; 
 end
 end
-V0=10^-5*diag(diagOfV0); % Initial variance of m0, should be pretty low
+V0=10^-2*diag(diagOfV0); % Initial variance of m0, should be pretty low
 
 
 ydata=totY(3400:end); % Initialize filter at beginning of modelling data, ie use these vectors.

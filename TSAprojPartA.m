@@ -284,9 +284,9 @@ figure(2)
 rho = acf( pe7, 100,0.05, 1, 1 );
 title("ACF for pe7");
 
-V_pe7=var(pe7) % =2.4250
+V_pe7=var(pe7) % =2.2482
 TV_pe7=F'*F*V_pe1 % =3.9 ie higher than actual
-mean(pe7) % =0.4048;
+mean(pe7) % =0.40492;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% 7-step pred on test2
@@ -328,7 +328,7 @@ figure(2)
 rho = acf( pe7, 100,0.05, 1, 1 );
 title("ACF for pe7");
 
-V_pe7=var(pe7) % =1.6315 lower than on test1 due to lower temp and thus lower absolute variance
+V_pe7=var(pe7) % =1.6895 lower than on test1 due to lower temp and thus lower absolute variance
 TV_pe7=F'*F*V_pe1 % =3.9 ie higher than actual
-mean(pe7) % =-2.0270;
+mean(pe7) % =-1.9377;
 
