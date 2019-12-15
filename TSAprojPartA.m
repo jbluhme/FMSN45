@@ -44,8 +44,8 @@ Mdldata=climate67(3400:5000,:); % Defines the data sets
 Valdata=climate67(5001:5600,:);
 
 
-Test1data=climate67(5601:5800,:);
-Test2data=climate67(8000-500:9200-500,:);
+Test1data=climate67(5601:5768,:);
+Test2data=climate67(7501:7668,:);
 
 %% ARMA modelling
 %% Step 1a Check whether transformation of data is reasonable
@@ -240,8 +240,95 @@ mean(pe26) % =0.7774 underestimates temperature
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Prediction on test sets
 
+% Define test sets should be one week each:
+Test1data=climate67(5601:5768,:);
+Test2data=climate67(7501:7668,:);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% 7-step pred on test1
+k=7;
+[F,G]=Diophantine(M1.c,M1.a,k)
+
+SF=50; % Safety factor, begin predicting SF time units before val to handle the initial corruptness of the data
+
+yval=Valdata(:,8); % Our zero mean adj. validation data vector
+yval=yval-mean(Mdldata(:,8)); 
+
+ytest1=Test1data(:,8);
+ytest1=ytest1-mean(Mdldata(:,8)); % Our zero mean test1 data 
+
+
+% Crucial that the predictions and true values are in line, it can be seen that:
+
+% yhat_7(1)= prediction of yval(end-SF+k) = yval(end-SF+(k-1)+1)=ynew(1+k) 
+% yhat_7(2)= prediction of yval(end-SF+k+1) = ynew(2+k)
 % ...
+% yhat_7(2+SF-k)=prediction of ynew(2+SF)=ytest1(1) ie the first "wanted" prediction
+
+% yhat_7(end-k)=prediction of ytest1(end) ie the last "wanted" pred.
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ynew=[yval(end-SF:end); ytest1]; % We concatenate the last SF+1 values of the val data vector and the test1 vector
+yhat_7=filter(G,M1.c,ynew); % We filter this concatenated vector
+figure(1)
+plot(yhat_7(2+SF-k:end-k)+mean(Mdldata(:,8))) 
+hold on 
+plot(ytest1(1:end)+mean(Mdldata(:,8)))
+legend('7-step pred','True value')
+pe7=ytest1(1:end)-yhat_7(2+SF-k:end-k); % 7-step pred error 
+hold off
+
+
+
+figure(2)
+rho = acf( pe7, 100,0.05, 1, 1 );
+title("ACF for pe7");
+
+V_pe7=var(pe7) % =2.4250
+TV_pe7=F'*F*V_pe1 % =3.9 ie higher than actual
+mean(pe7) % =0.4048;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% 7-step pred on test2
+k=7;
+[F,G]=Diophantine(M1.c,M1.a,k)
+
+SF=50; % Safety factor, begin predicting SF time units before val to handle the initial corruptness of the data
+
+yprev=climate67(7401:7500,8); % Our zero mean adj. data vector of the 100 data points right before ytest2
+yprev=yprev-mean(Mdldata(:,8)); 
+
+ytest2=Test2data(:,8);
+ytest2=ytest2-mean(Mdldata(:,8)); % Our zero mean test2 data 
+
+
+% Crucial that the predictions and true values are in line, it can be seen that:
+
+% yhat_7(1)= prediction of yval(end-SF+k) = yval(end-SF+(k-1)+1)=ynew(1+k) 
+% yhat_7(2)= prediction of yval(end-SF+k+1) = ynew(2+k)
+% ...
+% yhat_7(2+SF-k)=prediction of ynew(2+SF)=ytest1(1) ie the first "wanted" prediction
+
+% yhat_7(end-k)=prediction of ytest1(end) ie the last "wanted" pred.
+
+
+ynew=[yprev(end-SF:end); ytest2]; % We concatenate the last SF+1 values of the prev data vector and the test2 vector
+yhat_7=filter(G,M1.c,ynew); % We filter this concatenated vector
+figure(1)
+plot(yhat_7(2+SF-k:end-k)+mean(Mdldata(:,8))) 
+hold on 
+plot(ytest2(1:end)+mean(Mdldata(:,8)))
+legend('7-step pred','True value')
+pe7=ytest2(1:end)-yhat_7(2+SF-k:end-k); % 7-step pred error 
+hold off
+
+
+
+figure(2)
+rho = acf( pe7, 100,0.05, 1, 1 );
+title("ACF for pe7");
+
+V_pe7=var(pe7) % =1.6315 lower than on test1 due to lower temp and thus lower absolute variance
+TV_pe7=F'*F*V_pe1 % =3.9 ie higher than actual
+mean(pe7) % =-2.0270;
+

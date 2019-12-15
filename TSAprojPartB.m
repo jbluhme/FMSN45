@@ -44,8 +44,8 @@ Mdldata=climate67(3400:5000,:);
 Valdata=climate67(5001:5600,:);
 
 
-Test1data=climate67(5601:5800,:);
-Test2data=climate67(8000-500:9200-500,:);
+Test1data=climate67(5601:5768,:);
+Test2data=climate67(7501:7668,:);
 
 
 %% Transforming u with log and making zero mean & making y zero mean
@@ -347,4 +347,118 @@ mean(pe26)  %  =1.0774
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Pred on test data ...
+%% Pred on test data
+Test1data=climate67(5601:5768,:);
+Test2data=climate67(7501:7668,:);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% 7 step pred. test1 data
+k=7;
+
+% Same SF as for 1-step
+
+yval=Valdata(:,8); % Our val. data vector and test1 data
+yval=yval-meanY; 
+
+ytest1=Test1data(:,8);
+ytest1=ytest1-mean(Mdldata(:,8)); % Our zero mean test1 data 
+
+uval=Valdata(:,6);
+uval=uval+150;
+uval=log(uval);
+uval=uval-MeanLogu;
+
+utest1=Test1data(:,6);
+utest1=utest1+150;
+utest1=log(utest1);
+utest1=utest1-MeanLogu;
+
+ynew=[yval(end-SF:end); ytest1]; % Concatenate last SF-1 values of val data and test1 data
+unew=[uval(end-SF:end); utest1];
+
+unewfu7=unew(k+1:end); % Future u vector ie unefu7(i)=unew(i+7)
+
+% 
+[F,G]=Diophantine(C,A,k);
+[Fhat,Ghat]=Diophantine(conv(B,F),C,k)
+yhat_7=filter(Ghat,C,unew(1:end-k))+filter(G,C,ynew(1:end-k))+filter(Fhat,1,unewfu7);
+
+
+
+figure(1)
+plot(yhat_7(2+SF-k:end)+meanY) 
+hold on 
+plot(ytest1(1:end)+meanY)
+legend('7-step pred','True value')
+hold off
+pe7=ytest1(1:end)-yhat_7(2+SF-k:end); % 7-step pred error 
+
+
+
+
+figure(2)
+rho = acf( pe7, 100,0.05, 1, 1 );
+title("ACF for pe7"); % Should me MA(7-1) which seems reasonable
+
+
+
+
+
+V_pe7=var(pe7) % = 1,8770 lower than on validation data
+mean(pe7)  % 0.4650 Slight underestimation again
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% 7 step pred. test2 data
+k=7;
+
+% Same SF as for 1-step
+
+yprev=climate67(7401:7500,8); % Our zero mean adj. output data vector of the 100 data points right before ytest2
+yprev=yprev-mean(Mdldata(:,8)); 
+
+ytest2=Test2data(:,8);
+ytest2=ytest2-mean(Mdldata(:,8)); % Our zero mean test1 data 
+
+uprev=climate67(7401:7500,8); % Our input data vector of the 100 data points right before utest2
+uprev=uprev+150;
+uprev=log(uprev);
+uprev=uprev-MeanLogu; 
+
+utest2=Test2data(:,6);
+utest2=utest2+150;
+utest2=log(utest2);
+utest2=utest2-MeanLogu;
+
+
+ynew=[yprev(end-SF:end); ytest2]; % Concatenate last SF-1 values of prev data and test2 data
+unew=[uprev(end-SF:end); utest2];
+
+unewfu7=unew(k+1:end); % Future u vector ie unefu7(i)=unew(i+7)
+
+% 
+[F,G]=Diophantine(C,A,k);
+[Fhat,Ghat]=Diophantine(conv(B,F),C,k)
+yhat_7=filter(Ghat,C,unew(1:end-k))+filter(G,C,ynew(1:end-k))+filter(Fhat,1,unewfu7);
+
+
+
+figure(1)
+plot(yhat_7(2+SF-k:end)+meanY) 
+hold on 
+plot(ytest2(1:end)+meanY)
+legend('7-step pred','True value')
+hold off
+pe7=ytest2(1:end)-yhat_7(2+SF-k:end); % 7-step pred error 
+
+
+
+
+figure(2)
+rho = acf( pe7, 100,0.05, 1, 1 );
+title("ACF for pe7"); % Should me MA(7-1) which seems reasonable
+
+
+
+
+
+V_pe7=var(pe7) % = 1,2443 lower than on test1, most likely due to lower temperatures and thus lower absolut variability
+mean(pe7)  % -1.2711 Slight overestimation again
