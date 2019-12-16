@@ -68,12 +68,12 @@ y=y-meanY; % Makes y zero mean
 %% Model u as ARMA
 figure(1)
 
-phi = pacf( u, 100,0.05, 1, 1 );
+phi = pacf( u, 100,0.05, 1, 0 );
 title("PACF for u with 95% confidence interval (asymptotic interval)");
 figure(2)
-rho = acf( u, 100,0.05, 1, 1 );
+rho = acf( u, 100,0.05, 1, 0 );
 title("ACF for u with 95% confidence interval (asymptotic interval)");
-%%
+%% Clear 24 periodicity in acf and prominent 1 and 2 lags in pacf ->
 A24=[1 zeros(1,23) -1];
 
 A=conv([1 1 1],A24);
@@ -85,22 +85,23 @@ M1u.Structure.c.Free = C;
 modelU = pem(data,M1u); 
 r=resid(data,modelU);
 figure(1)
-phi = pacf( r.y, 100,0.05, 1, 1 );
+phi = pacf( r.y, 100,0.05, 1, 0 );
 
 figure(2)
-rho = acf( r.y, 100,0.05, 1, 1 );
+rho = acf( r.y, 100,0.05, 1, 0,0 );
 figure(3)
 whitenessTest(r.y,0.01)
 figure(4)
 plot(r.y)
 present(modelU)
 
+% Very white residual!!!
 %% Transform (pre-whiten) y and u with inverse input arma model
 upw=filter(modelU.a,modelU.c,u);
 ypw=filter(modelU.a,modelU.c,y);
 upw=upw(25:end);
 ypw=ypw(25:end);
-M=300;
+M=100;
 
 crosscorre(upw,ypw,M)
 
@@ -128,13 +129,13 @@ r=resid(z,Mba2);
 M=100
 crosscorre(res,u,M) % not perfect uncorrelation but looks good enough to move on
 %% ACF and PACF of Res
-phi = pacf( res, 50,0.05, 1, 1 );
+phi = pacf( res, 50,0.05, 1, 0 );
 title("PACF for u with 95% confidence interval (asymptotic interval)");
 figure(2)
-rho = acf( res, 50,0.05, 1, 1 );
+rho = acf( res, 50,0.05, 1, 0,0 );
 title("ACF for u with 95% confidence interval (asymptotic interval)");
-%% Seems to be a dependency at lag 1,2 and 23, 24 in PACF 
-% 
+%% Seems to be a dependency at lag 1,2 and 23, 24 in PACF:
+% We also add a c24 coeff.
 A1=[1 1 1 zeros(1,20) 1 1];
 C1=[1 zeros(1,23) 1];
 ar2=idpoly(1,[],C1,A1,[]);
@@ -145,10 +146,10 @@ NoiseMdl=pem(data,ar2);
 r=resid(data,NoiseMdl);
 present(NoiseMdl)
 %% Plots of ehat
-phi = pacf( r.y, 100,0.05, 1, 1 );
+phi = pacf( r.y, 100,0.05, 1, 0 );
 title("PACF for e with 95% confidence interval (asymptotic interval)");
 figure(2)
-rho = acf( r.y, 100,0.05, 1, 1 );
+rho = acf( r.y, 100,0.05, 1, 0,0 );
 title("ACF for e with 95% confidence interval (asymptotic interval)");
 figure(3)
 normplot(phi)
@@ -196,10 +197,10 @@ plot(-M:M, -2/sqrt(length(u))*ones(1,2*M+1),'--')
 hold off
 
 %%
-phi = pacf( ehat.y, 100,0.05, 1, 1 );
+phi = pacf( ehat.y, 100,0.05, 1, 0 );
 title("PACF for e with 95% confidence interval (asymptotic interval)");
 figure(2)
-rho = acf( ehat.y, 100,0.05, 1, 1 );
+rho = acf( ehat.y, 100,0.05, 1, 0,0 );
 title("ACF for e with 95% confidence interval (asymptotic interval)");
 figure(3)
 
@@ -260,7 +261,7 @@ pe1=yval(1:end)-yhat_1(2+SF-k:end); % 1-step pred error
 
 
 figure(2)
-rho = acf( pe1, 100,0.05, 1, 1 );
+rho = acf( pe1, 100,0.05, 1,0 ,0 );
 title("ACF for pe1");
 
 figure(3)
@@ -300,7 +301,7 @@ pe7=yval(1:end)-yhat_7(2+SF-k:end); % 7-step pred error
 
 
 figure(2)
-rho = acf( pe7, 100,0.05, 1, 1 );
+rho = acf( pe7, 100,0.05, 1, 6 );
 title("ACF for pe7"); % Should me MA(7-1) which seems reasonable
 
 
@@ -334,7 +335,7 @@ pe26=yval(1:end)-yhat_26(2+SF-k:end); % 26-step pred error
 
 
 figure(2)
-rho = acf( pe26, 100,0.05, 1, 1 );
+rho = acf( pe26, 100,0.05, 1, 25 );
 title("ACF for pe26"); % Should me MA(26-1) which seems reasonable
 
 
@@ -396,7 +397,7 @@ pe7=ytest1(1:end)-yhat_7(2+SF-k:end); % 7-step pred error
 
 
 figure(2)
-rho = acf( pe7, 100,0.05, 1, 1 );
+rho = acf( pe7, 100,0.05, 1, 6 );
 title("ACF for pe7"); % Should me MA(7-1) which seems reasonable
 
 
@@ -453,7 +454,7 @@ pe7=ytest2(1:end)-yhat_7(2+SF-k:end); % 7-step pred error
 
 
 figure(2)
-rho = acf( pe7, 100,0.05, 1, 1 );
+rho = acf( pe7, 100,0.05, 1, 6 );
 title("ACF for pe7"); % Should me MA(7-1) which seems reasonable
 
 

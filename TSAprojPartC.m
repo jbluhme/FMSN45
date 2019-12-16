@@ -137,7 +137,7 @@ pe=ynew(pred(1576-k:end,2))-pred(1576-k:end,1); % k-step pred error over val.
 
 
 figure(3)
-rho = acf( pe, 100,0.05, 1, 1 );
+rho = acf( pe, 100,0.05,1 , k-1,0 );
 title("ACF for pe over val with 95% confidence interval (asymptotic interval)");
 figure(4)
 
@@ -227,7 +227,7 @@ hold off
 
 figure(3)
 peTot=totY(pred(1:end,2))-pred(1:end,1);
-rho = acf( peTot, 100,0.05, 1, 1 );
+rho = acf( peTot, 100,0.05, 1, k-1,0 );
 title("ACF for peTot with 95% confidence interval (asymptotic interval)");
 
 VarianceOfTotalDataSetPredError=var(peTot)
@@ -297,7 +297,7 @@ hold off
 
 figure(2)
 peTest1=ydata(pred(2169:2336,2))-pred(2169:2336,1);
-rho = acf( peTest1, 100,0.05, 1, 1 );
+rho = acf( peTest1, 100,0.05, 1, k-1,1 );
 title("ACF for peTest1 with 95% confidence interval (asymptotic interval)");
 
 VarianceOfPredErrorTest1=var(peTest1)
@@ -314,7 +314,7 @@ hold off
 
 figure(4)
 peTest2=ydata(pred(4069:4236,2))-pred(4069:4236,1);
-rho = acf( peTest2, 100,0.05, 1, 1 );
+rho = acf( peTest2, 100,0.05, 1, k-1,1 );
 title("ACF for peTest2 with 95% confidence interval (asymptotic interval)");
 
 VarianceOfPredErrorTest2=var(peTest2)

@@ -47,6 +47,11 @@ Valdata=climate67(5001:5600,:);
 Test1data=climate67(5601:5768,:);
 Test2data=climate67(7501:7668,:);
 
+Totdata=climate67(1:end,8);
+T = linspace(datenum(1967 ,1 ,1) ,datenum(1967 ,12 ,31), length(Totdata)); % Create grid in month
+plot(T, Totdata); 
+datetick('x');
+
 %% ARMA modelling
 %% Step 1a Check whether transformation of data is reasonable
 
@@ -58,10 +63,10 @@ y=y-mean(y);
 
 %% Step 2 Examine the pacf and acf of y
 figure(1)
-phi = pacf( y, 100,0.05, 1, 1 );
+phi = pacf( y, 100,0.05, 1, 0 );
 title("PACF for y");
 figure(2)
-rho = acf( y, 100,0.05, 1, 1 );
+rho = acf( y, 100,0.05, 1, 0 );
 title("ACF for y");
 figure(3)
 normplot(phi)
@@ -87,10 +92,10 @@ r1=resid(M1,data);
 
 
 figure(1)
-phi = pacf( r1.y, 100,0.05, 1, 1 );
+phi = pacf( r1.y, 100,0.05, 1, 0);
 title("PACF for res");
 figure(2)
-rho = acf( r1.y, 100,0.05, 1, 1 );
+rho = acf( r1.y, 100,0.05, 1, 0,0 );
 title("ACF for res");
 figure(3)
 whitenessTest(r1.y,0.01)
@@ -132,7 +137,7 @@ pe1=yval(1:end)-yhat_1(1+SF:end-1); % 1-step pred error
 hold off
 
 figure(2)
-rho = acf( pe1, 100,0.05, 1, 1 );
+rho = acf( pe1, 100,0.05, 1, 0,0);
 title("ACF for pe1");
 figure(3)
 whitenessTest(pe1,0.01)
@@ -180,7 +185,7 @@ hold off
 
 
 figure(2)
-rho = acf( pe7, 100,0.05, 1, 1 );
+rho = acf( pe7, 100,0.05, 1, 6 );
 title("ACF for pe7");
 
 V_pe7=var(pe7) % =3.7104
@@ -230,7 +235,7 @@ hold off
 
 
 figure(2)
-rho = acf( pe26, 100,0.05, 1, 1 );
+rho = acf( pe26, 100,0.05, 1, 25 );
 title("ACF for pe26");
 
 V_pe26=var(pe26) % =4.7964
@@ -281,7 +286,7 @@ hold off
 
 
 figure(2)
-rho = acf( pe7, 100,0.05, 1, 1 );
+rho = acf( pe7, 100,0.05, 1, 6 );
 title("ACF for pe7");
 
 V_pe7=var(pe7) % =2.2482
@@ -325,7 +330,7 @@ hold off
 
 
 figure(2)
-rho = acf( pe7, 100,0.05, 1, 1 );
+rho = acf( pe7, 100,0.05, 1, 6 );
 title("ACF for pe7");
 
 V_pe7=var(pe7) % =1.6895 lower than on test1 due to lower temp and thus lower absolute variance
