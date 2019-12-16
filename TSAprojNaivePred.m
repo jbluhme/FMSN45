@@ -47,8 +47,8 @@ hold off
 legend('true y','naive 7-step pred')
 title("Naive 7-step prediction on validation data");
 
-VarVal=var(peVal)
-meanVal=mean(peVal)
+VarVal=var(peVal) %=5.4563
+meanVal=mean(peVal) %=-0.1633
 
 % Test1 
 
@@ -62,8 +62,8 @@ hold off
 legend('true y','naive 7-step pred')
 title("Naive 7-step prediction on test1 data");
 
-VarTest1=var(peTest1)
-meanTest1=mean(peTest1)
+VarTest1=var(peTest1) %=1.8964
+meanTest1=mean(peTest1) %=0.1817
 
 % Test2
 figure(3)
@@ -76,8 +76,8 @@ hold off
 legend('true y','naive 7-step pred')
 title("Naive 7-step prediction on test2 data");
 
-VarTest2=var(peTest2)
-meanTest2=mean(peTest2)
+VarTest2=var(peTest2) % =3.7225
+meanTest2=mean(peTest2) % =0.3704
 
 %% Naive 26-step val. data data, yhat(t+26|t)=y(t+26-48)=y(t-22)
 
