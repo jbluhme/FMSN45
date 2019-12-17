@@ -81,8 +81,8 @@ q=length(C)-1; %=26
 s=length(B)-1; %=26
 % In total 27+26+26+1=80 parameters but a lot are of course fixed to zero
 
-Re = 10^-6*eye(80); % Choose system error variability
-Rw=0.2228;             % Choose measurement error variability which should be around MSE of model
+Re = 10^-7*eye(80); % Choose system error variability
+Rw=0.25;             % Choose measurement error variability which should be around MSE of model
 m0=[A(2:end) C(2:end) B]'; % Our BJ non-recursive estimate as initial
 diagOfV0=zeros(1,length(m0)); 
 
@@ -93,12 +93,13 @@ else
    Re(i,i)=0; 
 end
 end
-V0=10^-7*diag(diagOfV0); % Initial variance of m0, should be pretty low
+V0=10^-10*diag(diagOfV0); % Initial variance of m0, should be pretty low
 
-
+V0=zeros(80);
+Re=zeros(80);
 %% Use kalman to rec. estimate param. over ynew and unew and predict k step on val. data 
 
-k=1; % desired prediction step size
+k=7; % desired prediction step size
 
 % function call:
 [param,pred]=kalman_armax(ynew,unew,p,s,q,Re,Rw,V0,m0,k);
@@ -111,9 +112,9 @@ size(pred)
 % Thus pred(1576-k,1)=ynewhat(1602|1602-k)=prediction of yval(1)
 % pred(end,1)=prediction of yval(end)
 
-plot(pred(1576-k:end,2),pred(1576-k:end,1)); % Plots k-step pred against true values over validation set
+plot(pred(1576-k:end,2),pred(1576-k:end,1)+meanY*ones(600,1)); % Plots k-step pred against true values over validation set
 hold on
-plot(pred(1576-k:end,2),ynew(pred(1576-k:end,2)))
+plot(pred(1576-k:end,2),ynew(pred(1576-k:end,2))+meanY*ones(600,1))
 legend('pred','true')
 hold off
 
@@ -158,7 +159,7 @@ whitenessTest(pe,0.01)
 % Choose kalman param:
 m0=[A(2:end) C(2:end) B]'; % Our BJ non-recursive estimate as initial
 
-Re = 10^-3*eye(80); % Choose system error variability
+Re = 10^-4*eye(80); % Choose system error variability
 Rw=0.5;             % Choose measurement error variability which should be around MSE of model
 diagOfV0=zeros(1,length(m0)); 
 
@@ -169,22 +170,24 @@ else
    Re(i,i)=0; 
 end
 end
-V0=10^-3*diag(diagOfV0); % Initial variance of m0, should be pretty low
+V0=10^-2*diag(diagOfV0); % Initial variance of m0, should be pretty low
 
 
 k=7; % desired prediction step size
 
 % function call:
-[param,pred]=kalman_armax(totY,totU,p,s,q,Re,Rw,V0,m0,k);
+y=totY(3400:end); % Decide how large part of year to look at
+u=totU(3400:end);
+[param,pred]=kalman_armax(y,u,p,s,q,Re,Rw,V0,m0,k);
 
 
 %% Plot k-step (defined above) pred over entire data, the correpsonding prediction error acf 
 % and the recursive param estimates of the ARMAX corresponding to our BJ
 % model in TSAProjPartB
-
-plot(pred(1:end,2),pred(1:end,1));
+figure(1)
+plot(pred(1:end,2),pred(1:end,1)+meanY*ones(length(pred),1));
 hold on
-plot(pred(1:end,2),totY(pred(1:end,2)))
+plot(pred(1:end,2),y(pred(1:end,2))+meanY*ones(length(pred),1))
 title("k-step pred over entire data set") 
 legend('pred','true')
 hold off
@@ -200,10 +203,10 @@ hold on
 plot(param(2,:))
 plot(param(3,:))
 plot(param(4,:))
-plot(ones(8760,1)*A(2))
-plot(ones(8760,1)*A(3))
-plot(ones(8760,1)*A(4))
-plot(ones(8760,1)*A(5))
+plot(ones(length(y),1)*A(2))
+plot(ones(length(y),1)*A(3))
+plot(ones(length(y),1)*A(4))
+plot(ones(length(y),1)*A(5))
 hold off
 title("A-polynomial, low lags")
 legend('a1', 'a2', 'a3', 'a4')
@@ -215,18 +218,18 @@ hold on
 plot(param(24,:))
 plot(param(25,:))
 plot(param(26,:)) 
-plot(ones(8760,1)*A(24))
-plot(ones(8760,1)*A(25))
-plot(ones(8760,1)*A(26))
-plot(ones(8760,1)*A(27))
+plot(ones(length(y),1)*A(24))
+plot(ones(length(y),1)*A(25))
+plot(ones(length(y),1)*A(26))
+plot(ones(length(y),1)*A(27))
 title("A-polynomial, high lags")
 legend('a23', 'a24', 'a25', 'a26')
 hold off
 
 % Add plots of how C and B polynomial param. change over time...
 
-figure(3)
-peTot=totY(pred(1:end,2))-pred(1:end,1);
+figure(4)
+peTot=y(pred(1:end,2))-pred(1:end,1);
 rho = acf( peTot, 100,0.05, 1, k-1,0 );
 title("ACF for peTot with 95% confidence interval (asymptotic interval)");
 
@@ -239,6 +242,9 @@ meanOfTotalDataSetPredError=mean(peTot)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%
+% Idea: Try to find which parameters that seem to be constant over the year
+% and set their variance to zero so that they stay constant. Then we allow the
+% truely changing parameters to tune in to their "right" values.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -258,7 +264,7 @@ Test1data=climate67(5601:5768,:); % ie ytest1=totY(5601:5768)
 Test2data=climate67(7501:7668,:);
 
 % Define kalman param: 
-Re = 10^-4*eye(80); % Choose system error variability
+Re = 10^-10*eye(80); % Choose system error variability
 Rw=0.25;             % Choose measurement error variability which should be around MSE of model
 diagOfV0=zeros(1,length(m0)); 
 
@@ -269,7 +275,7 @@ else
    Re(i,i)=0; 
 end
 end
-V0=10^-2*diag(diagOfV0); % Initial variance of m0, should be pretty low
+V0=10^-8*diag(diagOfV0); % Initial variance of m0, should be pretty low
 
 
 ydata=totY(3400:end); % Initialize filter at beginning of modelling data, ie use these vectors.
@@ -288,9 +294,9 @@ udata=totU(3400:end);
 
 figure(1)
 
-plot(pred(2169:2336,2),pred(2169:2336,1));
+plot(pred(2169:2336,2),pred(2169:2336,1)+meanY*ones(168,1));
 hold on
-plot(pred(2169:2336,2),ydata(pred(2169:2336,2)))
+plot(pred(2169:2336,2),ydata(pred(2169:2336,2))+meanY*ones(168,1))
 title("7-step pred with rec. kalman estimation of test1 data") 
 legend('pred','true')
 hold off
@@ -305,9 +311,9 @@ meanOfPredErrorTest1=mean(peTest1)
 
 figure(3)
 
-plot(pred(4069:4236,2),pred(4069:4236,1));
+plot(pred(4069:4236,2),pred(4069:4236,1)+meanY*ones(168,1));
 hold on
-plot(pred(4069:4236,2),ydata(pred(4069:4236,2)))
+plot(pred(4069:4236,2),ydata(pred(4069:4236,2))+meanY*ones(168,1))
 title("7-step pred with rec. kalman estimation of test2 data") 
 legend('pred','true')
 hold off
