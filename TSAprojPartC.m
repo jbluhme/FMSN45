@@ -159,7 +159,7 @@ whitenessTest(pe,0.01)
 % Choose kalman param:
 m0=[A(2:end) C(2:end) B]'; % Our BJ non-recursive estimate as initial
 
-Re = 10^-4*eye(80); % Choose system error variability
+Re = 10^-5*eye(80); % Choose system error variability
 Rw=0.5;             % Choose measurement error variability which should be around MSE of model
 diagOfV0=zeros(1,length(m0)); 
 
@@ -170,14 +170,21 @@ else
    Re(i,i)=0; 
 end
 end
-V0=10^-2*diag(diagOfV0); % Initial variance of m0, should be pretty low
+
+
+% Decide whether even more parameters should be constant
+
+
+
+
+V0=10^-3*diag(diagOfV0); % Initial variance of m0, should be pretty low
 
 
 k=7; % desired prediction step size
 
 % function call:
-y=totY(3400:end); % Decide how large part of year to look at
-u=totU(3400:end);
+y=totY; 
+u=totU;
 [param,pred]=kalman_armax(y,u,p,s,q,Re,Rw,V0,m0,k);
 
 
@@ -203,32 +210,41 @@ hold on
 plot(param(2,:))
 plot(param(3,:))
 plot(param(4,:))
-plot(ones(length(y),1)*A(2))
-plot(ones(length(y),1)*A(3))
-plot(ones(length(y),1)*A(4))
-plot(ones(length(y),1)*A(5))
-hold off
-title("A-polynomial, low lags")
-legend('a1', 'a2', 'a3', 'a4')
-
-figure(3)
-
 plot(param(23,:)) 
-hold on
 plot(param(24,:))
 plot(param(25,:))
 plot(param(26,:)) 
-plot(ones(length(y),1)*A(24))
-plot(ones(length(y),1)*A(25))
-plot(ones(length(y),1)*A(26))
-plot(ones(length(y),1)*A(27))
-title("A-polynomial, high lags")
-legend('a23', 'a24', 'a25', 'a26')
+
+hold off
+title("A-polynomial")
+legend('a1', 'a2', 'a3', 'a4','a23', 'a24', 'a25', 'a26')
+
+
+
+figure(3)
+plot(param(29,:)) 
+hold on
+plot(param(51,:))
+plot(param(53,:))
+title("C-polynomial")
+legend('c2', 'c24', 'c26')
 hold off
 
-% Add plots of how C and B polynomial param. change over time...
+figure(5)
+plot(param(54,:)) 
+hold on
+plot(param(55,:))
+plot(param(56,:))
+plot(param(57,:))
+plot(param(77,:)) 
+plot(param(78,:))
+plot(param(79,:))
+title("B-polynomial")
+legend('b0', 'b1', 'b2','b3','b23', 'b24', 'b25')
+hold off
 
-figure(4)
+
+figure(6)
 peTot=y(pred(1:end,2))-pred(1:end,1);
 rho = acf( peTot, 100,0.05, 1, k-1,0 );
 title("ACF for peTot with 95% confidence interval (asymptotic interval)");
@@ -264,8 +280,8 @@ Test1data=climate67(5601:5768,:); % ie ytest1=totY(5601:5768)
 Test2data=climate67(7501:7668,:);
 
 % Define kalman param: 
-Re = 10^-10*eye(80); % Choose system error variability
-Rw=0.25;             % Choose measurement error variability which should be around MSE of model
+Re = 10^-5*eye(80); % Choose system error variability
+Rw=50;             % Choose measurement error variability which should be around MSE of model
 diagOfV0=zeros(1,length(m0)); 
 
 for i=1:length(m0) % Makes sure that zero param stay zero by setting their variance to zero
@@ -275,6 +291,13 @@ else
    Re(i,i)=0; 
 end
 end
+
+
+for i=0:26 % only allow  A and C to change
+   Re(end-i,end-i)=0; 
+end
+
+diagOfV0=[diagOfV0(1:end-27) zeros(1,27)]; % allow only A and C polynomials to be dynamic
 V0=10^-8*diag(diagOfV0); % Initial variance of m0, should be pretty low
 
 
@@ -308,6 +331,7 @@ title("ACF for peTest1 with 95% confidence interval (asymptotic interval)");
 
 VarianceOfPredErrorTest1=var(peTest1)
 meanOfPredErrorTest1=mean(peTest1)
+peTest1SS=peTest1'*peTest1/length(peTest1)
 
 figure(3)
 
@@ -325,9 +349,25 @@ title("ACF for peTest2 with 95% confidence interval (asymptotic interval)");
 
 VarianceOfPredErrorTest2=var(peTest2)
 meanOfPredErrorTest2=mean(peTest2)
+peTest2SS=peTest2'*peTest2/length(peTest2)
+
+% Prediction error should be zero mean let us look at the sum of squared
+% deviations from zero rather than the sample variance of the pred. error
+% as a measurement of the performance of the model
 
 
- 
+% BJ w. constant parameters:
+
+% Test 1
+% V[pe7]=1,7438
+% mean[pe7]=0.4265
+% pe7SS=1.9154
+
+% Test 2
+% V[pe7]=1,3152
+% mean[pe7]=-1.2544
+% pe7SS=2.8810
+
  
  
 
