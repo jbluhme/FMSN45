@@ -81,7 +81,7 @@ q=length(C)-1; %=26
 s=length(B)-1; %=26
 % In total 27+26+26+1=80 parameters but a lot are of course fixed to zero
 
-Re = 10^-7*eye(80); % Choose system error variability
+Re = 10^-6*eye(80); % Choose system error variability
 Rw=0.25;             % Choose measurement error variability which should be around MSE of model
 m0=[A(2:end) C(2:end) B]'; % Our BJ non-recursive estimate as initial
 diagOfV0=zeros(1,length(m0)); 
@@ -159,8 +159,8 @@ whitenessTest(pe,0.01)
 % Choose kalman param:
 m0=[A(2:end) C(2:end) B]'; % Our BJ non-recursive estimate as initial
 
-Re = 10^-5*eye(80); % Choose system error variability
-Rw=0.5;             % Choose measurement error variability which should be around MSE of model
+Re = 10^-4*eye(80); % Choose system error variability
+Rw=10;             % Choose measurement error variability which should be around MSE of model
 diagOfV0=zeros(1,length(m0)); 
 
 for i=1:length(m0) % Makes sure that zero param stay zero by setting their variance to zero
@@ -172,19 +172,18 @@ end
 end
 
 
-% Decide whether even more parameters should be constant
 
 
 
 
-V0=10^-3*diag(diagOfV0); % Initial variance of m0, should be pretty low
+V0=10^-8*diag(diagOfV0); % Initial variance of m0, should be pretty low
 
 
-k=7; % desired prediction step size
+k=1; % desired prediction step size
 
 % function call:
-y=totY; 
-u=totU;
+y=totY(3400:end); 
+u=totU(3400:end);
 [param,pred]=kalman_armax(y,u,p,s,q,Re,Rw,V0,m0,k);
 
 
@@ -251,8 +250,8 @@ title("ACF for peTot with 95% confidence interval (asymptotic interval)");
 
 VarianceOfTotalDataSetPredError=var(peTot)
 meanOfTotalDataSetPredError=mean(peTot)
-
-
+figure(7)
+whitenessTest(peTot,0.01)
 
 
 
@@ -280,8 +279,8 @@ Test1data=climate67(5601:5768,:); % ie ytest1=totY(5601:5768)
 Test2data=climate67(7501:7668,:);
 
 % Define kalman param: 
-Re = 10^-5*eye(80); % Choose system error variability
-Rw=50;             % Choose measurement error variability which should be around MSE of model
+Re = 10^-4*eye(80); % Choose system error variability
+Rw=10;             % Choose measurement error variability which should be around MSE of model
 diagOfV0=zeros(1,length(m0)); 
 
 for i=1:length(m0) % Makes sure that zero param stay zero by setting their variance to zero
@@ -293,11 +292,7 @@ end
 end
 
 
-for i=0:26 % only allow  A and C to change
-   Re(end-i,end-i)=0; 
-end
 
-diagOfV0=[diagOfV0(1:end-27) zeros(1,27)]; % allow only A and C polynomials to be dynamic
 V0=10^-8*diag(diagOfV0); % Initial variance of m0, should be pretty low
 
 
