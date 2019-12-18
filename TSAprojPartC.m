@@ -159,8 +159,8 @@ whitenessTest(pe,0.01)
 % Choose kalman param:
 m0=[A(2:end) C(2:end) B]'; % Our BJ non-recursive estimate as initial
 
-Re = 10^-4*eye(80); % Choose system error variability
-Rw=10;             % Choose measurement error variability which should be around MSE of model
+Re = 10^-5*eye(80); % Choose system error variability
+Rw=5;             % Choose measurement error variability which should be around MSE of model
 diagOfV0=zeros(1,length(m0)); 
 
 for i=1:length(m0) % Makes sure that zero param stay zero by setting their variance to zero
@@ -179,7 +179,7 @@ end
 V0=10^-8*diag(diagOfV0); % Initial variance of m0, should be pretty low
 
 
-k=1; % desired prediction step size
+k=7; % desired prediction step size
 
 % function call:
 y=totY(3400:end); 
@@ -277,7 +277,7 @@ k=7; % desired prediction step size
 % Test data found at:
 Test1data=climate67(5601:5768,:); % ie ytest1=totY(5601:5768)
 Test2data=climate67(7501:7668,:);
-
+m0=[A(2:end) C(2:end) B]';
 % Define kalman param: 
 Re = 10^-4*eye(80); % Choose system error variability
 Rw=10;             % Choose measurement error variability which should be around MSE of model
@@ -294,6 +294,8 @@ end
 
 
 V0=10^-8*diag(diagOfV0); % Initial variance of m0, should be pretty low
+
+
 
 
 ydata=totY(3400:end); % Initialize filter at beginning of modelling data, ie use these vectors.
@@ -363,6 +365,162 @@ peTest2SS=peTest2'*peTest2/length(peTest2)
 % mean[pe7]=-1.2544
 % pe7SS=2.8810
 
- 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% Test data 7-step pred. Constant BJ model but allow for varying mean of process
+
+
+
+k=7; % desired prediction step size
+
+% When trying to predict the test data sets 
+% we do not want to initialize the kalman already at the beginning of the
+% year ie at totY(1), since the initial estimates m0 are not correct for
+% that part of the year since they are derived from modelling data.
+% It is much more logical to initilize the filter at beginning of modelling
+% data, ie at totY(3400). 
+
+% Test data found at:
+Test1data=climate67(5601:5768,:); % ie ytest1=totY(5601:5768)
+Test2data=climate67(7501:7668,:);
+
+% Define kalman param: 
+
+Rw=1; 
+
+m0=[A(2:end) C(2:end) B 0]'; % Add initial mean estimate=0 last
+
+diagOfRe=[zeros(1,length(m0)-1) 8]; 
+diagOfV0=[zeros(1,length(m0)-1) 1]; 
+
+for i=1:length(m0)-1 % Makes sure that zero param stay zero by setting their variance to zero
+if m0(i)~=0
+    diagOfV0(i)=1;
+   diagOfRe(i)=1; 
+end
+end
+
+
+
+%diagOfRe=[zeros(1,length(m0)-1) 1]; 
+%diagOfV0=[zeros(1,length(m0)-1) 1]; 
+V0=10^-8*diag(diagOfV0); 
+
+Re = 10^-4*diag(diagOfRe);
  
 
+
+
+
+ydata=totY(3400:end); % Initialize filter at beginning of modelling data, ie use these vectors.
+udata=totU(3400:end);
+
+% function call:
+[param,pred]=kalman_armaxVM(ydata,udata,p,s,q,Re,Rw,V0,m0,k);
+
+% Thus we find the predictions of the test sets:
+
+% pred(2176-k,1)=ydatahat(2202|2202-k)=prediction of ytest1(1)
+% pred(2343,1)=prediction of ytest1(end)
+
+% pred(4076-k,1)=ydatahat(4102|4102-k)=prediction of ytest2(1)
+% pred(4243,1)=prediction of ytest2(end)
+
+figure(1)
+
+plot(pred(2169:2336,2),pred(2169:2336,1)+meanY*ones(168,1));
+hold on
+plot(pred(2169:2336,2),ydata(pred(2169:2336,2))+meanY*ones(168,1))
+title("7-step pred with rec. kalman estimation of test1 data") 
+legend('pred','true')
+hold off
+
+figure(2)
+peTest1=ydata(pred(2169:2336,2))-pred(2169:2336,1);
+rho = acf( peTest1, 100,0.05, 1, k-1,1 );
+title("ACF for peTest1 with 95% confidence interval (asymptotic interval)");
+
+VarianceOfPredErrorTest1=var(peTest1)
+meanOfPredErrorTest1=mean(peTest1)
+peTest1SS=peTest1'*peTest1/length(peTest1)
+
+figure(3)
+
+plot(pred(4069:4236,2),pred(4069:4236,1)+meanY*ones(168,1));
+hold on
+plot(pred(4069:4236,2),ydata(pred(4069:4236,2))+meanY*ones(168,1))
+title("7-step pred with rec. kalman estimation of test2 data") 
+legend('pred','true')
+hold off
+
+figure(4)
+peTest2=ydata(pred(4069:4236,2))-pred(4069:4236,1);
+rho = acf( peTest2, 100,0.05, 1, k-1,1 );
+title("ACF for peTest2 with 95% confidence interval (asymptotic interval)");
+
+VarianceOfPredErrorTest2=var(peTest2)
+meanOfPredErrorTest2=mean(peTest2)
+peTest2SS=peTest2'*peTest2/length(peTest2)
+
+figure(5)
+plot(param(end,:))
+title("Varying mean");
+% Prediction error should be zero mean let us look at the sum of squared
+% deviations from zero rather than the sample variance of the pred. error
+% as a measurement of the performance of the model
+
+
+% BJ w. constant parameters:
+
+% Test 1
+% V[pe7]=1,7438
+% mean[pe7]=0.4265
+% pe7SS=1.9154
+
+% Test 2
+% V[pe7]=1,3152
+% mean[pe7]=-1.2544
+% pe7SS=2.8810
+
+
+
+
+figure(6)
+plot(param(1,:)) % a1 
+hold on
+plot(param(2,:))
+plot(param(3,:))
+plot(param(4,:))
+plot(param(23,:)) 
+plot(param(24,:))
+plot(param(25,:))
+plot(param(26,:)) 
+
+hold off
+title("A-polynomial")
+legend('a1', 'a2', 'a3', 'a4','a23', 'a24', 'a25', 'a26')
+
+
+
+figure(7)
+plot(param(29,:)) 
+hold on
+plot(param(51,:))
+plot(param(53,:))
+title("C-polynomial")
+legend('c2', 'c24', 'c26')
+hold off
+
+figure(8)
+plot(param(54,:)) 
+hold on
+plot(param(55,:))
+plot(param(56,:))
+plot(param(57,:))
+plot(param(77,:)) 
+plot(param(78,:))
+plot(param(79,:))
+title("B-polynomial")
+legend('b0', 'b1', 'b2','b3','b23', 'b24', 'b25')
+hold off
